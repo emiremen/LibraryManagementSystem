@@ -4,6 +4,9 @@
 - EntityFramework
 - Layered Architecture
 - SQLite Local Database
+- EntityFramework Migrations
+- Dependency Injection
+- Generic Classes
 
 #### Screenshots
 
