@@ -2,24 +2,28 @@
 using LibraryManagementSystem.ConsoleUI;
 using LibraryManagementSystem.DataAccess.Entities;
 using LibraryManagementSystem.DataAccess.SQLite;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
-using System.Text.Json;
+
 
 
 int _page = 1;
 
-var serviceProvider = new ServiceCollection()
-    .AddSingleton<SQLiteDbContext>()
-    .AddSingleton<IGenericDal<Category>, CategoryDal>()
-    .AddSingleton<IGenericDal<Book>, BookDal>()
-    .AddSingleton<IGenericService<Category>, CategoryService>()
-    .AddSingleton<IGenericService<Book>, BookService>()
-    .BuildServiceProvider();
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddSingleton<SQLiteDbContext>();
+builder.Services.AddSingleton<IBookDal, BookDal>();
+builder.Services.AddSingleton<ICategoryDal, CategoryDal>();
+builder.Services.AddSingleton<IUserDal, UserDal>();
+builder.Services.AddSingleton<IBorrowDal, BorrowDal>();
+builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddSingleton<ICategoryService, CategoryService>();
+builder.Services.AddSingleton<IBookService, BookService>();
+builder.Services.AddSingleton<IBorrowService, BorrowService>();
+
+builder.Build();
 
 
 
@@ -196,10 +200,10 @@ void ListAllBooks(int page = 1, int listLength = 5)
 
     List<Book> books = bookService.GetBooksWithCategory().Skip(page * listLength).Take(listLength).ToList();
 
-    if (books.Count == 0)
+    if (books.Count <= 0)
     {
         Console.WriteLine("-> Listenin sonuna ulaştınız.\n");
-        _page -= 1;
+        --_page;
     }
     else
     {
@@ -226,10 +230,16 @@ void ListAllBooks(int page = 1, int listLength = 5)
             SelectAChoice();
             break;
         case ConsoleKey.NumPad1 or ConsoleKey.D1:
-            if (_page > 1) ListAllBooks(--_page);
+            if (_page > 1) {
+                --_page;
+                ListAllBooks(_page);
+            };
             break;
         case ConsoleKey.NumPad2 or ConsoleKey.D2:
-            if (books.Count > 0) { ListAllBooks(++_page); } else { Navigation(); }
+            if (books.Count > 0) {
+                ++_page;
+                ListAllBooks(_page);
+            } else { Navigation(); }
             break;
         case ConsoleKey.NumPad3 or ConsoleKey.D3:
             AddNewBookToLibrary();
